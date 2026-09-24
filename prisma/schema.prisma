@@ -1,0 +1,144 @@
+// Prisma schema — Assessment Platform
+//
+// Phase 1 (MVP): users, students, exams, enrollments (+ audit_logs).
+// Future assessment tables (exam_sections, questions, question_options,
+// exam_questions, attempts, attempt_answers, results) hang off `Exam`,
+// `Student` and `Enrollment` and can be added in a new migration without
+// changing anything below. See README → "Extending to the assessment engine".
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ─── Enums ─────────────────────────────────────────────────────────────────
+
+enum UserRole {
+  STUDENT
+  ADMIN
+  SUPER_ADMIN
+}
+
+enum ExamStatus {
+  DRAFT
+  OPEN
+  CLOSED
+  COMPLETED
+}
+
+enum EnrollmentStatus {
+  PENDING
+  CONFIRMED
+  WAITLISTED
+  CANCELLED
+}
+
+// ─── Identity ──────────────────────────────────────────────────────────────
+
+/// Application user. Authentication lives in Clerk; `role` here is the
+/// server-side source of truth for authorization.
+model User {
+  id        String   @id @default(cuid())
+  clerkId   String   @unique @map("clerk_id")
+  email     String   @unique
+  role      UserRole @default(STUDENT)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  student   Student?
+  auditLogs AuditLog[]
+
+  @@index([role])
+  @@map("users")
+}
+
+/// Student profile. One per user. Exams are linked via `Enrollment`,
+/// never stored directly on the student.
+model Student {
+  id        String   @id @default(cuid())
+  userId    String   @unique @map("user_id")
+  name      String
+  phone     String
+  school    String
+  grade     String
+  city      String
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  enrollments Enrollment[]
+
+  @@index([name])
+  @@index([city])
+  @@index([grade])
+  @@map("students")
+}
+
+// ─── Exams & enrollment ────────────────────────────────────────────────────
+
+model Exam {
+  id              String     @id @default(cuid())
+  /// Short, uppercase code used as the application-number prefix (e.g. "FA26").
+  code            String     @unique
+  name            String
+  description     String?
+  startTime       DateTime?  @map("start_time")
+  endTime         DateTime?  @map("end_time")
+  durationMinutes Int?       @map("duration_minutes")
+  status          ExamStatus @default(DRAFT)
+  /// Monotonic counter used to issue application numbers. Incremented
+  /// atomically (row lock) inside the enrollment transaction.
+  applicationSeq  Int        @default(0) @map("application_seq")
+  createdAt       DateTime   @default(now()) @map("created_at")
+  updatedAt       DateTime   @updatedAt @map("updated_at")
+
+  enrollments Enrollment[]
+
+  @@index([status])
+  @@map("exams")
+}
+
+model Enrollment {
+  id                String           @id @default(cuid())
+  studentId         String           @map("student_id")
+  examId            String           @map("exam_id")
+  applicationNumber String           @unique @map("application_number")
+  status            EnrollmentStatus @default(CONFIRMED)
+  enrolledAt        DateTime         @default(now()) @map("enrolled_at")
+  createdAt         DateTime         @default(now()) @map("created_at")
+  updatedAt         DateTime         @updatedAt @map("updated_at")
+
+  student Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  exam    Exam    @relation(fields: [examId], references: [id], onDelete: Restrict)
+
+  /// A student can enroll in many exams, but only once per exam.
+  @@unique([studentId, examId])
+  @@index([examId, status])
+  @@index([status])
+  @@index([enrolledAt])
+  @@map("enrollments")
+}
+
+// ─── Audit ─────────────────────────────────────────────────────────────────
+
+/// Append-only log of important admin actions (status changes, exports…).
+model AuditLog {
+  id          String   @id @default(cuid())
+  actorId     String?  @map("actor_id")
+  action      String
+  entityType  String   @map("entity_type")
+  entityId    String?  @map("entity_id")
+  metadata    Json?
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  actor User? @relation(fields: [actorId], references: [id], onDelete: SetNull)
+
+  @@index([entityType, entityId])
+  @@index([actorId])
+  @@index([createdAt])
+  @@map("audit_logs")
+}
