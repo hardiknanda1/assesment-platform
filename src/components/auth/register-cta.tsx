@@ -13,12 +13,12 @@ import { Button } from "@/components/ui/button";
 export function RegisterCta({
   label = "Register now",
   size = "lg",
-  variant = "default",
+  variant = "mono",
   className,
 }: {
   label?: string;
   size?: "default" | "sm" | "lg";
-  variant?: "default" | "outline" | "secondary";
+  variant?: "default" | "outline" | "secondary" | "mono" | "mono-invert" | "mono-outline";
   className?: string;
 }) {
   const { isSignedIn } = useAuth();
