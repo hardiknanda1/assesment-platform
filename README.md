@@ -11,7 +11,8 @@ A modular-monolith Next.js app for promoting an assessment, enrolling students, 
 | Landing page (static, animated, responsive) | `/` |
 | Auth (Clerk) | `/sign-in`, `/sign-up` |
 | Enrollment form + confirmation | `/register`, `/register/confirmation/[applicationNumber]` |
-| Student dashboard + assessment placeholder | `/dashboard`, `/assessment` |
+| Student dashboard + assessment lobby (Start button unlocks during the exam window) | `/dashboard`, `/assessment` |
+| Exam room (distraction-free layout; engine plugs in here) | `/exam/[applicationNumber]` |
 | Admin: stats, enrollment list (search / filter / server-side pagination), details, status change, CSV export | `/admin`, `/admin/enrollments`, `/admin/enrollments/[id]` |
 
 **API** (JSON; the same services back the pages and server actions):
@@ -124,7 +125,7 @@ The platform is shaped so the engine slots in without rework:
 
 1. **Schema:** add `exam_sections`, `questions`, `question_options`, `exam_questions`, `attempts`, `attempt_answers` and `results` in a new migration (`npm run db:migrate`). `Attempt` should reference `Enrollment` (one attempt per enrollment, enforced with a unique constraint), which already ties student and exam together.
 2. **Services:** add `attempt.service.ts` and `evaluation.service.ts` next to the existing ones. Start and submit are durable Postgres transactions, with a server-owned `started_at` / `deadline_at` for the timer and idempotent submit (unique constraint plus status check). Scoring runs only on the server.
-3. **UI/API:** `/assessment` already exists behind auth. Add `POST /api/exams/:id/start`, `PATCH /api/attempts/:id/answers` (batched auto-save) and `POST /api/attempts/:id/submit`.
+3. **UI/API:** the exam room `/exam/[applicationNumber]` already exists behind auth and re-checks the exam window on the server (`assessment.service.ts`); render the question player there. Add `POST /api/exams/:id/start`, `PATCH /api/attempts/:id/answers` (batched auto-save) and `POST /api/attempts/:id/submit`.
 4. **Scale for 300–400 concurrent students:** use Neon's pooled `DATABASE_URL` and keep `DATABASE_POOL_MAX` small per instance. Batch answer auto-saves (for example every 10–15 s, or on navigation) rather than writing per click. Add Redis (Upstash) for rate limiting and hot session state only if load testing shows it's needed.
 
 ## Deploying to Vercel + Neon

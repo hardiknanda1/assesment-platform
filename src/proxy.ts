@@ -8,7 +8,7 @@ import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
  * role stored in PostgreSQL — in `requireAdmin()` for every /admin page and
  * `requireApiAdmin()` for every admin API route — not only here.
  */
-const isProtectedPage = createRouteMatcher(["/dashboard(.*)", "/assessment(.*)", "/register(.*)", "/admin(.*)"]);
+const isProtectedPage = createRouteMatcher(["/dashboard(.*)", "/assessment(.*)", "/exam(.*)", "/register(.*)", "/admin(.*)"]);
 
 const isProtectedApi = createRouteMatcher(["/api/enrollments(.*)", "/api/students(.*)", "/api/admin(.*)"]);
 
