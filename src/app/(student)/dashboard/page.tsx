@@ -4,7 +4,6 @@ import {
   CalendarClock,
   Clock3,
   GraduationCap,
-  Hourglass,
   MapPin,
   Phone,
   Plus,
@@ -15,6 +14,8 @@ import {
 } from "lucide-react";
 import { requireUser } from "@/lib/auth";
 import { getStudentDashboard, type StudentDashboard } from "@/lib/services/student.service";
+import { getAssessmentAvailability } from "@/lib/services/assessment.service";
+import { StartAssessmentButton, assessmentHint } from "@/components/assessment/start-assessment-button";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { PageHeader } from "@/components/shared/page-header";
@@ -68,7 +69,6 @@ export default async function DashboardPage() {
           {student.enrollments.map((enrollment) => (
             <EnrollmentCard key={enrollment.id} enrollment={enrollment} />
           ))}
-          <AssessmentPlaceholder />
         </div>
         <ProfileCard student={student} />
       </div>
@@ -80,6 +80,7 @@ type DashboardEnrollment = StudentDashboard["enrollments"][number];
 
 function EnrollmentCard({ enrollment }: { enrollment: DashboardEnrollment }) {
   const { exam } = enrollment;
+  const availability = getAssessmentAvailability(enrollment);
   return (
     <Card className="overflow-hidden py-0">
       <div className="flex flex-col gap-4 border-b bg-gradient-to-br from-primary/8 via-transparent to-brand-2/8 p-6 sm:flex-row sm:items-center sm:justify-between">
@@ -109,28 +110,10 @@ function EnrollmentCard({ enrollment }: { enrollment: DashboardEnrollment }) {
           <p className="text-sm leading-relaxed text-muted-foreground sm:col-span-3">{exam.description}</p>
         ) : null}
       </CardContent>
-    </Card>
-  );
-}
-
-function AssessmentPlaceholder() {
-  return (
-    <Card className="border-dashed">
-      <CardContent className="flex flex-col items-start gap-4 sm:flex-row sm:items-center">
-        <span className="grid size-12 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary">
-          <Hourglass className="size-5" />
-        </span>
-        <div className="flex-1">
-          <h3 className="font-semibold">Your online assessment</h3>
-          <p className="mt-1 text-sm text-muted-foreground">
-            The test will be available here on exam day. You&apos;ll be able to start it with one click — no extra
-            software needed.
-          </p>
-        </div>
-        <Button variant="secondary" disabled>
-          Not yet available
-        </Button>
-      </CardContent>
+      <div className="flex flex-col gap-3 border-t bg-muted/30 px-6 py-4 sm:flex-row sm:items-center sm:justify-between">
+        <p className="text-sm text-muted-foreground">{assessmentHint(availability)}</p>
+        <StartAssessmentButton applicationNumber={enrollment.applicationNumber} availability={availability} />
+      </div>
     </Card>
   );
 }

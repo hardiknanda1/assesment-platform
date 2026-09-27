@@ -32,7 +32,7 @@ const EXAMS = [
     name: "Advanced Aptitude Assessment 2026",
     description:
       "For Classes 11–12. Covers advanced quantitative reasoning, data interpretation and critical thinking. 100 questions.",
-    startTime: "2026-12-14T04:30:00.000Z",
+    startTime: "2026-08-20T04:30:00.000Z",
     endTime: "2026-12-14T07:00:00.000Z",
     durationMinutes: 150,
     status: "OPEN",

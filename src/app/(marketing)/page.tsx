@@ -1,17 +1,13 @@
+import { AboutExam } from "@/components/landing/about-exam";
 import { Hero } from "@/components/landing/hero";
-import { Benefits } from "@/components/landing/benefits";
-import { HowItWorks } from "@/components/landing/how-it-works";
-import { Faq } from "@/components/landing/faq";
-import { CtaSection } from "@/components/landing/cta-section";
+import { Prizes } from "@/components/landing/prizes";
 
 export default function LandingPage() {
   return (
     <>
       <Hero />
-      <Benefits />
-      <HowItWorks />
-      <Faq />
-      <CtaSection />
+      <Prizes />
+      <AboutExam />
     </>
   );
 }

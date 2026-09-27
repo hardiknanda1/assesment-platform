@@ -16,6 +16,12 @@ const buttonVariants = cva(
         secondary: "bg-secondary text-secondary-foreground shadow-xs hover:bg-secondary/80",
         ghost: "hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent/50",
         link: "text-primary underline-offset-4 hover:underline",
+        /** Solid black-on-white, the primary CTA on the light marketing sections. */
+        mono: "bg-neutral-950 text-white shadow-xs hover:bg-neutral-800",
+        /** Solid white-on-black, for use on the dark marketing chrome (header/footer/hero). */
+        "mono-invert": "bg-white text-neutral-950 shadow-xs hover:bg-white/90",
+        /** Outlined, for use on the dark marketing chrome. */
+        "mono-outline": "border border-white/25 bg-transparent text-white hover:border-white hover:bg-white/10",
       },
       size: {
         default: "h-9 px-4 py-2 has-[>svg]:px-3",
